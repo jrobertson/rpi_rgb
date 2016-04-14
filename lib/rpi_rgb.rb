@@ -29,7 +29,7 @@ class RPiRGB
       RPiLed.new(x, brightness: brightness, smooth: smooth)
     end
     
-    @brightness, @presets = presets, brightness    
+    @brightness, @presets = brightness, presets    
 
   end
 
