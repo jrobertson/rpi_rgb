@@ -29,7 +29,7 @@ class RPiRGB
       RPiLed.new(x, brightness: brightness, smooth: smooth)
     end
     
-    @presets = presets
+    @brightness, @presets = presets, brightness    
 
   end
 
@@ -50,16 +50,16 @@ class RPiRGB
     case val
 
     when 'red'
-      mix 100, 0, 0
+      mix @brightness, 0, 0
 
     when 'green'
-      mix 0, 100, 0
+      mix 0, @brightness, 0
 
     when 'blue'
-      mix 0, 0, 100
+      mix 0, 0, @brightness
 
     when 'white'
-      mix 100, 100, 100
+      mix @brightness, @brightness, @brightness
 
     else
       
