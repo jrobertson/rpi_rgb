@@ -9,7 +9,7 @@ require 'rpi_led'
 
 =begin
 
-rgb =  RPiRGB.new(%w(4 17 27), presets: {purple: [0,100,100]})
+rgb =  RPiRGB.new(%w(4 17 27), presets: {purple: [100,100,0]})
 rgb.color = 'white'
 sleep 2
 rgb.color = 'purple'
@@ -29,7 +29,7 @@ class RPiRGB
       RPiLed.new(x, brightness: brightness, smooth: smooth)
     end
     
-    @brightness, @presets = brightness, presets    
+    @brightness, @presets = brightness, presets 
 
   end
 
@@ -50,16 +50,16 @@ class RPiRGB
     case val
 
     when 'red'
-      mix @brightness, 0, 0
+      mix 100, 0, 0
 
     when 'green'
-      mix 0, @brightness, 0
+      mix 0, 100, 0
 
     when 'blue'
-      mix 0, 0, @brightness
+      mix 0, 0, 100
 
     when 'white'
-      mix @brightness, @brightness, @brightness
+      mix 100, 100, 100
 
     else
       
@@ -81,10 +81,11 @@ class RPiRGB
   
   def mix(*values)
     
-    values.flatten!
+    r, g, b = values.flatten.map {|v| v / (100 / @brightness ) }
     
     [@red, @green, @blue].each(&:on)
-    red.brightness, green.brightness, blue.brightness = values
+    
+    red.brightness, green.brightness, blue.brightness = r, g, b
   end
   
   def off()
