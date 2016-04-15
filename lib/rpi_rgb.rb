@@ -9,12 +9,24 @@ require 'rpi_led'
 
 =begin
 
-rgb =  RPiRGB.new(%w(4 17 27), presets: {purple: [100,100,0]})
+presets = {
+  purple: [100,0,100], 
+  yellow: [75, 40, 5, 100],
+  orange: [20, 3, 0],
+  lilac: [20, 3, 60],
+  turquoise: [1, 10, 10]
+}
+
+rgb =  RPiRGB.new(%w(27 17 4), presets: presets, smooth: true)
 rgb.color = 'white'
 sleep 2
 rgb.color = 'purple'
 sleep 2
 rgb.color = 'green'
+sleep 2
+rgb.brightness = 4
+sleep 2
+rgb.color = 'yellow'
 
 =end
 
@@ -23,13 +35,17 @@ class RPiRGB
   attr_accessor :brightness
   attr_reader :red, :green, :blue
 
-  def initialize(pins, brightness: 100, smooth: false, presets: nil)
+  def initialize(pins, brightness: 100, smooth: false, presets: nil, \
+                 transition_time: 1.5)
     
     @red, @green, @blue = pins.map do |x| 
-      RPiLed.new(x, brightness: brightness, smooth: smooth)
+      RPiLed.new(x, brightness: brightness, smooth: smooth, \
+                 transition_time: transition_time)
     end
     
-    @brightness, @presets = brightness, presets 
+    @brightness, @presets = brightness, presets
+    @transition_time = transition_time
+    @old_brightness = @brightness
 
   end
 
@@ -81,7 +97,21 @@ class RPiRGB
   
   def mix(*values)
     
-    r, g, b = values.flatten.map {|v| v / (100 / @brightness ) }
+    values.flatten!
+    
+    r, g, b = if values.length < 4 then
+      
+      self.brightness = @old_brightness
+      values.map {|v| v / (100.0 / @brightness ) }
+      
+    else
+      
+      @old_brightness = @brightness
+      self.brightness = values.pop
+      sleep @transition_time if @smooth
+      values
+      
+    end
     
     [@red, @green, @blue].each(&:on)
     
