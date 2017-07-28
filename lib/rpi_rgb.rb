@@ -2,6 +2,7 @@
 
 # file: rpi_rgb.rb
 
+require 'rgb'
 require 'rpi_led'
 
 
@@ -10,14 +11,14 @@ require 'rpi_led'
 =begin
 
 presets = {
-  purple: [100,0,100], 
-  yellow: [75, 40, 5, 100],
-  orange: [20, 3, 0],
-  lilac: [20, 3, 60],
-  turquoise: [1, 10, 10]
-}
+  purple: '#800080', 
+  yellow: '#FFFF00',
+  orange: '#FFA500',
+  turquoise: '#40E0D0',
+  steelblue: '#4682B4'
+}  
 
-rgb =  RPiRGB.new(%w(27 17 4), presets: presets, smooth: true)
+rgb =  RPiRGB.new(%w(27 17 22), presets: presets, smooth: true)
 rgb.color = 'white'
 sleep 2
 rgb.color = 'purple'
@@ -30,12 +31,14 @@ rgb.color = 'yellow'
 
 =end
 
+# see also: 500+ Named Colours with rgb and hex values http://www.cloford.com/resources/colours/500col.htm
+
 class RPiRGB
 
   attr_accessor :brightness
   attr_reader :red, :green, :blue
 
-  def initialize(pins, brightness: 100, smooth: false, presets: nil, \
+  def initialize(pins, brightness: 100, smooth: false, presets: {}, \
                  transition_time: 1.5)
     
     @red, @green, @blue = pins.map do |x| 
@@ -62,29 +65,26 @@ class RPiRGB
   def colour=(val)
     
     @colour = val
-
-    case val
-
-    when 'red'
-      mix 100, 0, 0
-
-    when 'green'
-      mix 0, 100, 0
-
-    when 'blue'
-      mix 0, 0, 100
-
-    when 'white'
-      mix 100, 100, 100
-
-    else
+    
+    if val.is_a? String then
       
-      return unless @presets
-
-      preset = @presets[val.to_sym]
-
-      mix(preset) if preset
-
+      return mix( RGB::Color.from_rgb_hex(val).to_rgb) if val =~ /^#/
+      
+      h = {red: '#FF0000', green: '#00FF00', blue: '#0000FF', white: '#FFFFFF'}
+              
+      color = h.merge(@presets)[val.to_sym]
+      
+      if color then
+        
+        if color =~ /^#/ then
+          mix( RGB::Color.from_rgb_hex(color).to_rgb) 
+        else
+          mix color
+        end
+      end
+      
+    elsif val.is_a? Array
+      mix val
     end
   end
   
@@ -95,9 +95,9 @@ class RPiRGB
   alias color= colour=
   alias color colour
   
-  def mix(*values)
+  def mix(*rgb_values)    
     
-    values.flatten!
+    values = rgb_values.flatten.map {|x| (x * 0.392).round }
     
     r, g, b = if values.length < 4 then
       
@@ -118,9 +118,17 @@ class RPiRGB
     red.brightness, green.brightness, blue.brightness = r, g, b
   end
   
-  def off()
-    [@red, @green, @blue].each(&:off)
+  def blink(seconds=0.5, duration: nil)
+    [@red, @green, @blue].each{|x| x.blink(seconds, duration: duration) }
+  end  
+  
+  def off(durationx=nil, duration: nil)
+    [@red, @green, @blue].each{|x| x.off(durationx, duration: duration) }
   end
+  
+  def on(durationx=nil, duration: nil)
+    [@red, @green, @blue].each{|x| x.on(durationx, duration: duration) }
+  end  
   
 
 end
